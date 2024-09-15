@@ -1,0 +1,21 @@
+{
+  "name": "kopi-amerta-api",
+  "description": "API for Kopi Amerta, a premium Indonesian coffee online store",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts"
+  },
+  "dependencies": {
+    "@hono/swagger-ui": "^0.4.1",
+    "@hono/zod-openapi": "^0.16.0",
+    "@prisma/client": "^5.19.1",
+    "hono": "^4.6.1",
+    "oslo": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "prisma": "^5.19.1"
+  },
+  "author": "Zacky Achmad",
+  "license": "MIT"
+}
