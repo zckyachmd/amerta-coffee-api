@@ -30,3 +30,13 @@ export const registerSchema = loginSchema
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z
+    .string()
+    .min(1, "Refresh token is required!")
+    .max(255)
+    .openapi({
+      description: "The refresh token of the user.",
+    }),
+});

@@ -26,14 +26,29 @@ model User {
 }
 
 model UserToken {
-  id         Int       @id @default(autoincrement())
-  userId     Int
-  token      String
-  issuedAt   DateTime  @default(now())
-  expiresAt  DateTime
-  revoked    Boolean   @default(false)
-  user       User      @relation("UserTokens", fields: [userId], references: [id])
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String
+  issuedAt  DateTime @default(now())
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  user      User     @relation("UserTokens", fields: [userId], references: [id])
 
   @@index([userId, token])
   @@map("user_tokens")
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  price       Float    @default(0)
+  stock_qty   Int      @default(0)
+  slug        String?  @unique
+  sku         String?  @db.VarChar(100)
+  image_url   String?  @default("https://placehold.co/500x500?text=No%20Image")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products")
 }

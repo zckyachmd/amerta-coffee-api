@@ -1,12 +1,18 @@
 import type { Context } from "hono";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { login, register, regenToken, logout } from "@/services/authService";
-import { registerSchema, loginSchema } from "@/schemas/authSchema";
 import { getCookie, setCookie } from "hono/cookie";
+import * as authService from "@/services/authService";
+import * as authSchema from "@/schemas/authSchema";
 
 const authRoute = new OpenAPIHono();
 const API_TAGS = ["Auth"];
 
+/**
+ * Sets a refresh token cookie in the response.
+ *
+ * @param c The Hono context object.
+ * @param refreshToken The refresh token to set in the cookie.
+ */
 const setTokenCookie = (c: Context, refreshToken: string) => {
   setCookie(c, "refreshToken", refreshToken, {
     httpOnly: true,
@@ -28,7 +34,7 @@ authRoute.openapi(
       body: {
         content: {
           "application/json": {
-            schema: registerSchema,
+            schema: authSchema.registerSchema,
           },
         },
       },
@@ -47,7 +53,7 @@ authRoute.openapi(
     const body = await c.req.json();
 
     try {
-      const user = await register(body);
+      const user = await authService.register(body);
       return c.json({ status: "success", data: user }, 201);
     } catch (error: Error | any) {
       return c.json(
@@ -69,7 +75,7 @@ authRoute.openapi(
       body: {
         content: {
           "application/json": {
-            schema: loginSchema,
+            schema: authSchema.loginSchema,
           },
         },
       },
@@ -88,9 +94,9 @@ authRoute.openapi(
     const body = await c.req.json();
 
     try {
-      const token = await login(body);
+      const token = await authService.login(body);
       setTokenCookie(c, token.refreshToken);
-      return c.json({ status: "success", data: token.accessToken }, 200);
+      return c.json({ status: "success", token: token.accessToken }, 200);
     } catch (error: Error | any) {
       return c.json(
         { status: "failed", error: error.message || "Login failed!" },
@@ -107,6 +113,15 @@ authRoute.openapi(
     path: "/refresh-token",
     summary: "Refresh access token",
     description: "Refresh the access token using the refresh token.",
+    request: {
+      body: {
+        content: {
+          "application/json": {
+            schema: authSchema.refreshTokenSchema,
+          },
+        },
+      },
+    },
     responses: {
       200: {
         description: "Token successfully refreshed",
@@ -120,11 +135,11 @@ authRoute.openapi(
   async (c: Context) => {
     const refreshToken = getCookie(c, "refreshToken");
     if (!refreshToken) {
-      return c.json({ message: "Refresh token is required" }, 401);
+      return c.json({ message: "Refresh token is required!" }, 401);
     }
 
     try {
-      const result = await regenToken(refreshToken);
+      const result = await authService.regenToken(refreshToken);
       setTokenCookie(c, result.refreshToken);
       return c.json({ status: "success", data: result }, 200);
     } catch (error: Error | any) {
@@ -156,11 +171,11 @@ authRoute.openapi(
   async (c: Context) => {
     const refreshToken = getCookie(c, "refreshToken");
     if (!refreshToken) {
-      return c.json({ message: "Refresh token is required" }, 401);
+      return c.json({ message: "Refresh token is required!" }, 401);
     }
 
     try {
-      await logout(refreshToken);
+      await authService.logout(refreshToken);
       setCookie(c, "refreshToken", "", {
         httpOnly: true,
         secure: true,

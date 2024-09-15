@@ -1,6 +1,6 @@
-# Kopi Amerta API
+# Amerta Coffee API
 
-Welcome to **Kopi Amerta API**, the backend service for **Kopi Amerta**, your premium Indonesian coffee online store. This API handles all the server-side operations, including product management, user authentication, and order processing.
+Welcome to **Amerta Coffee API**, the backend service for **Amerta Coffee**, your premium Indonesian coffee online store. This API handles all the server-side operations, including product management, user authentication, and order processing.
 
 ## Features
 
@@ -17,15 +17,15 @@ Welcome to **Kopi Amerta API**, the backend service for **Kopi Amerta**, your pr
 1. Clone the repository and install the required dependencies:
 
 ```bash
-git clone https://github.com/zckyachmd/kopi-amerta-api.git
-cd kopi-amerta-api
+git clone https://github.com/zckyachmd/amerta-coffee-api.git
+cd amerta-coffee-api
 bun install
 ```
 
 2. Create a `.env` file in the root directory and add the following environment variables:
 
 ```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/kopi_amerta
+DATABASE_URL=postgresql://user:password@localhost:5432/amerta-coffee
 JWT_SECRET=your_jwt_secret
 SALT_ROUNDS=10 # Adjust this value to your desired security level
 ```
