@@ -1,5 +1,6 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { cors } from "hono/cors";
 import authRoute from "@/routes/authRoute";
 import productRoute from "@/routes/productRoute";
 
@@ -27,7 +28,8 @@ app.doc("/spec.json", {
   },
 });
 
-// API route
+// API routes
+app.use("*", cors());
 app.route("/auth", authRoute);
 app.route("/products", productRoute);
 

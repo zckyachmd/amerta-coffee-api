@@ -1,22 +1,16 @@
 import { z } from "@hono/zod-openapi";
 import { productSchema } from "@/schemas/productSchema";
 import db from "@/libs/db";
-
-const slugify = (name: string) => {
-  return name
-    .trim()
-    .toLowerCase()
-    .replace(/ /g, "-")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-};
+import slugify from "@/utils/slugifyUtils";
+import parseFilters from "@/utils/filterUtils";
+import parseSorts from "@/utils/sortUtils";
 
 /**
  * Retrieves a list of products with pagination.
  *
  * @param page The page number to retrieve. Defaults to 1.
  * @param limit The number of products to retrieve per page. Defaults to 10.
- * @param params The search term to filter products by. Case-insensitive.
+ * @param filters The search term to filter products by. Case-insensitive.
  * @returns An object with the following properties:
  *   - products: An array of product objects.
  *   - pagination: An object with the following properties:
@@ -27,41 +21,46 @@ const slugify = (name: string) => {
 export const getAll = async (
   page: number = 1,
   limit: number = 10,
-  search?: string
+  filters?: string,
+  sort?: string
 ) => {
-  const [products, total] = await Promise.all([
-    db.product.findMany({
-      where: {
-        name: {
-          contains: search,
-          mode: "insensitive",
-        },
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    db.product.count({
-      where: {
-        name: {
-          contains: search,
-          mode: "insensitive",
-        },
-      },
-    }),
-  ]);
+  const whereConditions = parseFilters(filters);
+  const orderBy = parseSorts(sort);
+  const skip = page > 0 ? (page - 1) * limit : 0;
+  const take = limit > 0 ? limit : 10;
 
-  if (!products || products.length === 0) {
-    throw new Error("Products not found!");
+  try {
+    const [products, total] = await Promise.all([
+      db.product.findMany({
+        where: whereConditions,
+        skip,
+        take,
+        orderBy,
+      }),
+      db.product.count({
+        where: whereConditions,
+      }),
+    ]);
+
+    if (products.length === 0) {
+      throw new Error("Products not found!");
+    }
+
+    return {
+      products,
+      pagination: page
+        ? {
+            currentPage: page,
+            totalPages: Math.ceil(total / take),
+            total,
+          }
+        : undefined,
+    };
+  } catch (error) {
+    throw error;
+  } finally {
+    await db.$disconnect();
   }
-
-  return {
-    products,
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(total / limit) || 1,
-      total,
-    },
-  };
 };
 
 /**

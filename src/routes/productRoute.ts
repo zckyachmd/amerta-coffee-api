@@ -39,14 +39,18 @@ productRoute.openapi(
     tags: API_TAGS,
   },
   async (c: Context) => {
-    const query = c.req.query();
+    const { page = "0", limit = "0", filters = "", sorts = "" } = c.req.query();
 
-    const page = Number(query?.page) || 1;
-    const limit = Number(query?.limit) || 10;
-    const search = query?.search || "";
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
 
     try {
-      const products = await productService.getAll(page, limit, search);
+      const products = await productService.getAll(
+        pageNumber,
+        limitNumber,
+        filters,
+        sorts
+      );
       return c.json({ status: "success", data: products }, 200);
     } catch (error: Error | any) {
       return c.json(
@@ -128,7 +132,8 @@ productRoute.openapi(
     tags: API_TAGS,
   },
   async (c: Context) => {
-    const body: z.infer<typeof productSchema.productSchema> = await c.req.json();
+    const body: z.infer<typeof productSchema.productSchema> =
+      await c.req.json();
 
     try {
       const product = await productService.create(body);
@@ -178,7 +183,8 @@ productRoute.openapi(
   },
   async (c: Context) => {
     const productId = c.req.param("productId");
-    const body: z.infer<typeof productSchema.productSchema> = await c.req.json();
+    const body: z.infer<typeof productSchema.productSchema> =
+      await c.req.json();
 
     try {
       const product = await productService.update(Number(productId), body);

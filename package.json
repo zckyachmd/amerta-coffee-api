@@ -5,14 +5,18 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
-    "migrate:dev": "bun run prisma migrate dev",
-    "migrate:deploy": "bun run prisma migrate deploy"
+    "db:migrate:dev": "bun run prisma migrate dev",
+    "db:migrate:deploy": "bun run prisma migrate deploy",
+    "db:seed": "bun prisma db seed"
+  },
+  "prisma": {
+    "seed": "bun run prisma/seed.ts"
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.4.1",
     "@hono/zod-openapi": "^0.16.0",
     "@prisma/client": "^5.19.1",
-    "hono": "^4.6.1",
+    "hono": "^4.6.2",
     "oslo": "^1.2.1"
   },
   "devDependencies": {

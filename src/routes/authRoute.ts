@@ -113,15 +113,6 @@ authRoute.openapi(
     path: "/refresh-token",
     summary: "Refresh access token",
     description: "Refresh the access token using the refresh token.",
-    request: {
-      body: {
-        content: {
-          "application/json": {
-            schema: authSchema.refreshTokenSchema,
-          },
-        },
-      },
-    },
     responses: {
       200: {
         description: "Token successfully refreshed",
