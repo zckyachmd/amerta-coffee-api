@@ -1,16 +1,33 @@
 import { PrismaClient } from "@prisma/client";
-import fs from "fs";
-import path from "path";
+import { hashValue } from "../src/libs/crypto";
 import slugify from "../src/utils/slugifyUtils";
+import users from "./samples/users";
+import products from "./samples/products";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const filePath = path.join(__dirname, "sample.json");
-  const rawData = fs.readFileSync(filePath, "utf-8");
-  const samples = JSON.parse(rawData);
+  console.log("Seeding users...");
+  for (const user of users) {
+    const userData = {
+      name: user.name,
+      email: user.email,
+      password: await hashValue(user.password),
+    };
 
-  for (const product of samples) {
+    await prisma.user.upsert({
+      where: { email: user.email },
+      update: userData,
+      create: {
+        ...userData,
+      },
+    });
+
+    console.log(`🆕 User: ${user.name}`);
+  }
+
+  console.log("Seeding products...");
+  for (const product of products) {
     const productData = {
       name: product.name,
       description: product.description,
@@ -28,6 +45,8 @@ async function main() {
         slug: slugify(product.name),
       },
     });
+
+    console.log(`🆕 Product: ${product.name}`);
   }
 }
 

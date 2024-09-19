@@ -30,11 +30,7 @@ const authMiddleware = () => {
         return c.json({ message: "Unauthorized!" }, 401);
       }
 
-      const userId = parseInt(decodedToken.subject, 10);
-      if (isNaN(userId)) {
-        return c.json({ message: "Invalid user ID in token!" }, 401);
-      }
-
+      const userId = decodedToken.subject;
       const user = await db.user.findUnique({
         where: { id: userId },
         select: { id: true },

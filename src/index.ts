@@ -1,12 +1,14 @@
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
 import authRoute from "@/routes/authRoute";
 import productRoute from "@/routes/productRoute";
 
 const app = new OpenAPIHono();
 
 // Web routes
+app.use(logger());
 app.get("/", (c) => {
   return c.json(
     {

@@ -82,7 +82,7 @@ export const createRefreshToken = async (
     await db.userToken.create({
       data: {
         token: hashedToken,
-        userId: parseInt(userId, 10),
+        userId: userId,
         issuedAt: new Date(),
         expiresAt: new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000),
       },

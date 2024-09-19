@@ -69,7 +69,7 @@ export const getAll = async (
  * @param count Whether to count the number of products.
  * @returns The retrieved product, or throws an error if the product is not found.
  */
-export const getById = async (id: number, count = false) => {
+export const getById = async (id: string, count = false) => {
   if (count) {
     const productExists = await db.product.count({
       where: { id },
@@ -151,7 +151,7 @@ export const create = async (data: z.infer<typeof productSchema>) => {
  * @returns The updated product, or throws an error if the product is not updated.
  */
 export const update = async (
-  id: number,
+  id: string,
   data: z.infer<typeof productSchema>
 ) => {
   const {
@@ -188,7 +188,7 @@ export const update = async (
  * @param id The ID of the product to delete.
  * @returns The deleted product, or throws an error if the product is not found.
  */
-export const deleteById = async (id: number) => {
+export const deleteById = async (id: string) => {
   const isExist = await getById(id, true);
   if (!isExist) {
     throw new Error("Product not found!");

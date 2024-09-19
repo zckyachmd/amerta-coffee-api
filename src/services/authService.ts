@@ -76,8 +76,7 @@ const processToken = async (
     throw new Error("Invalid or expired refresh token");
   }
 
-  const userId = parseInt(decodedToken.subject, 10);
-
+  const userId = decodedToken.subject;
   return await db.$transaction(async (prisma) => {
     const tokenRecords = await prisma.userToken.findMany({
       where: {

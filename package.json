@@ -3,11 +3,12 @@
   "description": "API for Amerta Coffee, a premium Indonesian coffee online store",
   "version": "1.0.0",
   "scripts": {
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate --no-hints",
+    "db:seed": "prisma db seed",
     "dev": "bun run --hot src/index.ts",
-    "start": "bun run src/index.ts",
-    "db:migrate:dev": "bun run prisma migrate dev",
-    "db:migrate:deploy": "bun run prisma migrate deploy",
-    "db:seed": "bun prisma db seed"
+    "start": "bun run db:migrate:deploy && bun run src/index.ts"
   },
   "prisma": {
     "seed": "bun run prisma/seed.ts"
