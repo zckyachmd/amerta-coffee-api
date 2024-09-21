@@ -106,6 +106,38 @@ authRoute.openapi(
   }
 );
 
+// Profile Route
+authRoute.openapi(
+  {
+    method: "get",
+    path: "/me",
+    summary: "Get user profile",
+    security: [{ AuthorizationBearer: [] }],
+    responses: {
+      200: {
+        description: "User profile retrieved successfully",
+      },
+      401: {
+        description: "Unauthorized",
+      },
+    },
+    tags: API_TAGS,
+  },
+  async (c: Context) => {
+    const jwt = c.req.header("Authorization")?.replace("Bearer ", "");
+    if (!jwt) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+
+    try {
+      const user = await authService.profile(jwt);
+      return c.json({ status: "success", data: user }, 200);
+    } catch (error: Error | any) {
+      return c.json({ error: "Failed to get profile" }, 401);
+    }
+  }
+);
+
 // Refresh Token Route
 authRoute.openapi(
   {

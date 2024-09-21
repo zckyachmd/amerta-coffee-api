@@ -26,7 +26,7 @@ export const getAll = async (
 ) => {
   const whereConditions = parseFilters(filters);
   const orderBy = parseSorts(sort);
-  const skip = page > 0 ? (page - 1) * limit : 0;
+  const skip = Math.max((page - 1) * limit, 0);
   const take = limit > 0 ? limit : 10;
 
   try {
@@ -42,22 +42,18 @@ export const getAll = async (
       }),
     ]);
 
-    if (products.length === 0) {
-      throw new Error("Products not found!");
-    }
-
     return {
       products,
+      totalData: total,
       pagination: page
         ? {
             currentPage: page,
             totalPages: Math.ceil(total / take),
-            total,
           }
         : undefined,
     };
   } catch (error) {
-    throw error;
+    throw new Error("Failed to fetch products");
   } finally {
     await db.$disconnect();
   }

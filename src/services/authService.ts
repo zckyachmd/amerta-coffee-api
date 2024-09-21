@@ -21,10 +21,19 @@ export const register = async (data: z.infer<typeof registerSchema>) => {
   }
 
   const hashedPassword = await crypto.hashValue(data.password);
+  const initials = data?.name
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+  const avatar = `https://placehold.co/300x300/FFFFFF/000000/?text=${initials}`;
+
   const user = await db.user.create({
     data: {
       name: data.name,
       email: data.email,
+      phone: data?.phone,
+      address: data?.address,
+      avatar_url: data?.avatar_url || avatar,
       password: hashedPassword,
     },
   });
@@ -55,6 +64,38 @@ export const login = async (data: z.infer<typeof loginSchema>) => {
   ]);
 
   return { accessToken, refreshToken };
+};
+
+/**
+ * Gets the profile of the user from the given access token.
+ *
+ * @param token The access token to validate and extract the user ID from.
+ * @returns The user's profile with their name and email.
+ * @throws {Error} If the token is invalid or expired.
+ */
+export const profile = async (token: string) => {
+  const decodedToken = await jwt.validateToken(token);
+
+  if (!decodedToken?.subject) {
+    throw new Error("Invalid or expired access token");
+  }
+
+  const user = await db.user.findUnique({
+    where: { id: decodedToken.subject },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return {
+    name: user?.name,
+    email: user?.email,
+    avatar: user?.avatar_url,
+    phone: user?.phone,
+    address: user?.address,
+    joinedAt: user?.createdAt,
+  };
 };
 
 /**

@@ -187,7 +187,7 @@ productRoute.openapi(
       await c.req.json();
 
     try {
-      const product = await productService.update(Number(productId), body);
+      const product = await productService.update(productId, body);
       return c.json({ status: "success", data: product }, 200);
     } catch (error: Error | any) {
       return c.json(
@@ -229,7 +229,7 @@ productRoute.openapi(
     const productId = c.req.param("productId");
 
     try {
-      const product = await productService.deleteById(Number(productId));
+      const product = await productService.deleteById(productId);
       return c.json({ status: "success", data: product }, 200);
     } catch (error: Error | any) {
       return c.json(

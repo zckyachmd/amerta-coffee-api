@@ -13,6 +13,9 @@ async function main() {
       name: user.name,
       email: user.email,
       password: await hashValue(user.password),
+      address: user.address,
+      phone: user.phone,
+      avatar_url: user.avatar_url,
     };
 
     await prisma.user.upsert({
