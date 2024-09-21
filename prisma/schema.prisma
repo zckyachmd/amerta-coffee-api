@@ -25,6 +25,7 @@ model User {
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   tokens     UserToken[] @relation("UserTokens")
+  Cart       Cart[]
 
   @@map("users")
 }
@@ -43,18 +44,44 @@ model UserToken {
 }
 
 model Product {
-  id             String   @id @default(cuid())
-  name           String   @unique @db.VarChar(100)
+  id             String     @id @default(cuid())
+  name           String     @unique @db.VarChar(100)
   description    String?
-  price          Int      @default(0)
-  stock_qty      Int      @default(0)
-  slug           String?  @unique
-  sku            String?  @db.VarChar(100)
-  image_url      String[] @db.Text
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  price          Int        @default(0)
+  stock_qty      Int        @default(0)
+  slug           String?    @unique
+  sku            String?    @db.VarChar(100)
+  image_url      String[]   @db.Text
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
   specifications Json?
   grinding       Json?
+  CartItem       CartItem[]
 
   @@map("products")
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String
+  items     CartItem[] @relation("CartItems")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+  cart      Cart     @relation("CartItems", fields: [cartId], references: [id])
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
 }
