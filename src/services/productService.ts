@@ -6,17 +6,13 @@ import parseFilters from "@/utils/filterUtils";
 import parseSorts from "@/utils/sortUtils";
 
 /**
- * Retrieves a list of products with pagination.
+ * Retrieves a list of products.
  *
- * @param page The page number to retrieve. Defaults to 1.
- * @param limit The number of products to retrieve per page. Defaults to 10.
- * @param filters The search term to filter products by. Case-insensitive.
- * @returns An object with the following properties:
- *   - products: An array of product objects.
- *   - pagination: An object with the following properties:
- *     - currentPage: The current page number.
- *     - totalPages: The total number of pages.
- *     - total: The total number of products.
+ * @param {number} [page=1] - The page number to fetch.
+ * @param {number} [limit=10] - The limit of products per page.
+ * @param {string} [filters] - Filters to apply to the query.
+ * @param {string} [sort] - Sorting to apply to the query.
+ * @return {Promise<{ products: import("@prisma/client").Product[], totalData: number, pagination?: { currentPage: number, totalPages: number } }>}
  */
 export const getAll = async (
   page: number = 1,
@@ -61,9 +57,14 @@ export const getAll = async (
 
 /**
  * Retrieves a product by its ID.
- * @param id The ID of the product to retrieve.
- * @param count Whether to count the number of products.
- * @returns The retrieved product, or throws an error if the product is not found.
+ *
+ * If `count` is set to `true`, it will only return an object with `exists` key
+ * indicating whether the product exists or not.
+ *
+ * If `count` is set to `false` or not provided, it will return the product data.
+ *
+ * @throws {Error} If product not found
+ * @returns {Promise<{exists: boolean} | Product>}
  */
 export const getById = async (id: string, count = false) => {
   if (count) {
@@ -88,8 +89,8 @@ export const getById = async (id: string, count = false) => {
 /**
  * Retrieves a product by its slug.
  *
- * @param slug The slug of the product to retrieve.
- * @returns The retrieved product, or throws an error if the product is not found.
+ * @throws {Error} If product not found
+ * @returns {Promise<Product>}
  */
 export const getBySlug = async (slug: string) => {
   const product = await db.product.findUnique({
@@ -106,8 +107,8 @@ export const getBySlug = async (slug: string) => {
 /**
  * Creates a new product.
  *
- * @param data The product data to create.
- * @returns The created product, or throws an error if the product is not created.
+ * @throws {Error} If product with same name already exists
+ * @returns {Promise<Product>}
  */
 export const create = async (data: z.infer<typeof productSchema>) => {
   const {
@@ -116,7 +117,7 @@ export const create = async (data: z.infer<typeof productSchema>) => {
     price,
     stock,
     sku = null,
-    image = "https://placehold.co/500x500?text=No%20Image",
+    images = ["https://placehold.co/500x500?text=No%20Image"],
   } = data;
 
   const isExist = await db.product.findUnique({
@@ -134,7 +135,7 @@ export const create = async (data: z.infer<typeof productSchema>) => {
       stock_qty: stock,
       slug: slugify(name),
       sku,
-      image_url: image,
+      image_url: Array.isArray(images) ? images : [images],
     },
   });
 };
@@ -142,9 +143,8 @@ export const create = async (data: z.infer<typeof productSchema>) => {
 /**
  * Updates a product.
  *
- * @param id The ID of the product to update.
- * @param data The product data to update.
- * @returns The updated product, or throws an error if the product is not updated.
+ * @throws {Error} If product with given id not found
+ * @returns {Promise<Product>}
  */
 export const update = async (
   id: string,
@@ -156,7 +156,7 @@ export const update = async (
     price,
     stock,
     sku = null,
-    image = "https://placehold.co/500x500?text=No%20Image",
+    images = ["https://placehold.co/500x500?text=No%20Image"],
   } = data;
 
   const isExist = await getById(id, true);
@@ -173,16 +173,16 @@ export const update = async (
       stock_qty: stock,
       slug: slugify(name),
       sku,
-      image_url: image,
+      image_url: Array.isArray(images) ? images : [images],
     },
   });
 };
 
 /**
- * Deletes a product by its ID.
+ * Deletes a product by its id.
  *
- * @param id The ID of the product to delete.
- * @returns The deleted product, or throws an error if the product is not found.
+ * @throws {Error} If product with given id not found
+ * @returns {Promise<void>}
  */
 export const deleteById = async (id: string) => {
   const isExist = await getById(id, true);

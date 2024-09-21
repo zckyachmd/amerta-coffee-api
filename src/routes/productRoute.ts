@@ -39,7 +39,14 @@ productRoute.openapi(
     tags: API_TAGS,
   },
   async (c: Context) => {
-    const { page = "0", limit = "0", filters = "", sorts = "" } = c.req.query();
+    const {
+      page = "0",
+      limit = "0",
+      filters = "",
+      q = "",
+      sorts = "",
+      s = "",
+    } = c.req.query();
 
     const pageNumber = Number(page);
     const limitNumber = Number(limit);
@@ -48,8 +55,8 @@ productRoute.openapi(
       const products = await productService.getAll(
         pageNumber,
         limitNumber,
-        filters,
-        sorts
+        filters || q,
+        sorts || s
       );
       return c.json({ status: "success", data: products }, 200);
     } catch (error: Error | any) {

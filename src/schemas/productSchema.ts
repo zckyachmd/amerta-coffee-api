@@ -6,12 +6,12 @@ export const productSchema = z.object({
   price: z.coerce.number().min(1).openapi({ example: 10000 }),
   stock: z.coerce.number().min(1).openapi({ example: 10 }),
   sku: z.string().optional().openapi({ example: "KC001" }),
-  image: z
-    .string()
-    .url()
-    .or(z.literal(""))
-    .or(z.null())
-    .openapi({ example: "https://placehold.co/500x500?text=No%20Image" }),
+  images: z
+    .array(z.string().url())
+    .optional()
+    .openapi({ example: ["https://placehold.co/500x500?text=No%20Image"] }),
+  specifications: z.record(z.string(), z.any()).optional(),
+  grinding: z.record(z.string(), z.any()).optional(),
 });
 
 export const productQuerySchema = z.object({

@@ -37,7 +37,13 @@ async function main() {
       price: product.price,
       stock_qty: product.stock_qty,
       sku: product.sku,
-      image_url: product.image_url,
+      image_url: product.image_url || [],
+      specifications: product.specifications
+        ? JSON.parse(JSON.stringify(product.specifications))
+        : {},
+      grinding: product.grinding
+        ? JSON.parse(JSON.stringify(product.grinding))
+        : {},
     };
 
     await prisma.product.upsert({
