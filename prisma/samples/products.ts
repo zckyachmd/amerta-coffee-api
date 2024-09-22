@@ -77,6 +77,6 @@ const generateProduct = (): Product => {
   };
 };
 
-const products: Product[] = Array.from({ length: 10 }, generateProduct);
+const products: Product[] = Array.from({ length: 30 }, generateProduct);
 
 export default products;

@@ -64,6 +64,16 @@ export const addItemToCart = async (
     where: { cartId_productId: { cartId: cart.id, productId } },
   });
 
+  const product = await db.product.findUnique({
+    where: { id: productId },
+  });
+
+  const totalQuantity = (existingItem ? existingItem.quantity : 0) + quantity;
+
+  if (!product || totalQuantity > product.stock_qty) {
+    throw new Error("Not enough stock available.");
+  }
+
   if (existingItem) {
     return await db.cartItem.update({
       where: { id: existingItem.id },
@@ -106,6 +116,20 @@ export const updateItemInCart = async (
     throw new Error("Item not found in the user's cart.");
   }
 
+  const product = await db.product.findUnique({
+    where: { id: existingItem.productId },
+  });
+
+  if (!product || !product.isAvailable) {
+    throw new Error(
+      `Product with ID ${existingItem.productId} is not available.`
+    );
+  }
+
+  if (quantity > product.stock_qty) {
+    throw new Error("Not enough stock available.");
+  }
+
   return await db.cartItem.update({
     where: { id: itemId },
     data: { quantity },
@@ -132,4 +156,78 @@ export const removeItemFromCart = async (userId: string, itemId: string) => {
   await db.cartItem.delete({
     where: { id: itemId },
   });
+};
+
+/**
+ * Checkout the user's cart.
+ *
+ * This will mark all items in the user's cart as unavailable and then delete the cart.
+ *
+ * @param {string} userId - The ID of the user.
+ * @throws {Error} If the cart is not found.
+ * @returns {Promise<void>}
+ */
+export const checkoutCart = async (userId: string) => {
+  const cart = await db.cart.findFirst({
+    where: { userId },
+    include: { items: { include: { product: true } } },
+  });
+
+  if (!cart || cart.items.length === 0) {
+    throw new Error("Cart is empty or not found.");
+  }
+
+  for (const item of cart.items) {
+    const product = await db.product.findUnique({
+      where: { id: item.productId },
+    });
+
+    if (!product || !product.isAvailable) {
+      throw new Error(
+        `Item with ID ${item.product.name} is no longer available.`
+      );
+    }
+  }
+
+  const totalAmount = cart.items.reduce((total, item) => {
+    return total + item.quantity * item.product.price;
+  }, 0);
+
+  const order = await db.order.create({
+    data: {
+      userId,
+      totalAmount,
+      items: {
+        create: cart.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.product.price,
+        })),
+      },
+    },
+  });
+
+  for (const item of cart.items) {
+    const product = await db.product.findUnique({
+      where: { id: item.productId },
+    });
+
+    if (product) {
+      const newStock = product.stock_qty - item.quantity;
+
+      await db.product.update({
+        where: { id: item.productId },
+        data: {
+          stock_qty: newStock,
+          isAvailable: newStock > 0,
+        },
+      });
+    }
+  }
+
+  await db.cart.delete({
+    where: { id: cart.id },
+  });
+
+  return order;
 };

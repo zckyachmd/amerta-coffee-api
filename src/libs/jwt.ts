@@ -35,7 +35,7 @@ export const createAccessToken = async (
     };
 
     return await createJWT("HS256", secret, {}, options);
-  } catch (error) {
+  } catch (error: Error | any) {
     throw new Error("Failed to create access token.", { cause: error });
   }
 };
@@ -50,7 +50,7 @@ export const validateToken = async (token: string) => {
   try {
     const secret = await getEncodedSecret();
     return await validateJWT("HS256", secret, token);
-  } catch (error) {
+  } catch (error: Error | any) {
     throw new Error("Failed to validate token.", { cause: error });
   }
 };
@@ -89,7 +89,7 @@ export const createRefreshToken = async (
     });
 
     return refreshToken;
-  } catch (error) {
+  } catch (error: Error | any) {
     throw new Error("Failed to create refresh token.", { cause: error });
   }
 };

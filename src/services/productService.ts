@@ -48,7 +48,7 @@ export const getAll = async (
           }
         : undefined,
     };
-  } catch (error) {
+  } catch (error: Error | any) {
     throw new Error("Failed to fetch products", { cause: error });
   } finally {
     await db.$disconnect();

@@ -206,4 +206,42 @@ cartRoute.openapi(
   }
 );
 
+// Checkout Cart
+cartRoute.openapi(
+  {
+    method: "post",
+    path: "/checkout",
+    summary: "Checkout Cart",
+    middleware: authMiddleware(),
+    security: [{ AuthorizationBearer: [] }],
+    responses: {
+      200: {
+        description: "Checkout Cart",
+      },
+      400: {
+        description: "Checkout Cart Failed",
+      },
+      401: {
+        description: "Unauthorized",
+      },
+    },
+    tags: API_TAGS,
+  },
+  async (c: Context) => {
+    const userId = c.get("user").id as string;
+    try {
+      await cartService.checkoutCart(userId);
+      return c.json({ status: "success", message: "Cart checked out!" }, 200);
+    } catch (error: any) {
+      return c.json(
+        {
+          status: "failed",
+          error: error.message || "Checkout Cart Failed!",
+        },
+        400
+      );
+    }
+  }
+);
+
 export default cartRoute;

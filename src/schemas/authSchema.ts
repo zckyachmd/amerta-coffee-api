@@ -29,26 +29,21 @@ export const passwordSchema = z
 
 export const registerSchema = loginSchema
   .extend({
-    name: z.string().min(1, "Name is required").max(255).openapi({
+    name: z.string().min(3, "Name is required").max(255).openapi({
       description: "The name of the user.",
       example: "User",
     }),
-    phone: z.string().min(1, "Phone is required").max(255).optional().openapi({
+    phone: z.string().max(255).optional().openapi({
       description: "The phone of the user.",
       example: "081234567890",
     }),
-    address: z
-      .string()
-      .min(1, "Address is required")
-      .max(255)
-      .optional()
-      .openapi({
-        description: "The address of the user.",
-        example: "Jl. Sama Dia No. 1 Jakarta",
-      }),
+    address: z.string().max(255).optional().openapi({
+      description: "The address of the user.",
+      example: "Jl. Sama Dia No. 1 Jakarta",
+    }),
     avatar_url: z
       .string()
-      .min(1, "Avatar URL is required")
+      .min(10, "Avatar URL is required")
       .max(255)
       .optional()
       .openapi({

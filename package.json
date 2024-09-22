@@ -3,7 +3,7 @@
   "description": "API for Amerta Coffee, a premium Indonesian coffee online store",
   "version": "1.0.0",
   "scripts": {
-    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:dev": "prisma migrate dev --name init",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate --no-hints",
     "db:seed": "prisma db seed",

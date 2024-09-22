@@ -27,10 +27,10 @@ const authMiddleware = () => {
     try {
       const decodedToken = await validateToken(token);
       if (!decodedToken || !decodedToken.subject) {
-        return c.json({ message: "Unauthorized!" }, 401);
+        throw new Error("Invalid or expired access token!");
       }
 
-      const userId = decodedToken.subject;
+      const userId = decodedToken?.subject;
       const user = await db.user.findUnique({
         where: { id: userId },
         select: { id: true },
@@ -42,8 +42,8 @@ const authMiddleware = () => {
       c.set("user", user);
 
       await next();
-    } catch (error) {
-      return c.json({ message: "Authentication failed" }, 401);
+    } catch (error: Error | any) {
+      return c.json({ message: error.message || "Unauthorized!" }, 401);
     }
   });
 };
