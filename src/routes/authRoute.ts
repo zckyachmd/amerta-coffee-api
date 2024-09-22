@@ -133,7 +133,7 @@ authRoute.openapi(
       const user = await authService.profile(jwt);
       return c.json({ status: "success", data: user }, 200);
     } catch (error: Error | any) {
-      return c.json({ error: "Failed to get profile" }, 401);
+      return c.json({ message: error.message || "Failed to get profile" }, 401);
     }
   }
 );
@@ -164,9 +164,12 @@ authRoute.openapi(
     try {
       const result = await authService.regenToken(refreshToken);
       setTokenCookie(c, result.refreshToken);
-      return c.json({ status: "success", data: result }, 200);
+      return c.json({ status: "success", token: result.accessToken }, 200);
     } catch (error: Error | any) {
-      return c.json({ error: "Failed to refresh token" }, 401);
+      return c.json(
+        { message: error.message || "Failed to refresh token" },
+        401
+      );
     }
   }
 );
@@ -207,7 +210,7 @@ authRoute.openapi(
       });
       return c.json({ message: "Logout successful" }, 200);
     } catch (error: Error | any) {
-      return c.json({ message: "Failed to logout" }, 500);
+      return c.json({ message: error.message || "Failed to log out!" }, 500);
     }
   }
 );

@@ -6,6 +6,7 @@ import authRoute from "@/routes/authRoute";
 import productRoute from "@/routes/productRoute";
 import cartRoute from "@/routes/cartRoute";
 
+const allowedOrigins = process.env.JWT_ALLOWS_ORIGINS?.split(",") || [];
 const app = new OpenAPIHono();
 
 // Web routes
@@ -32,9 +33,17 @@ app.doc("/spec.json", {
 });
 
 // API routes
-app.use("*", cors());
+app.use(
+  "*",
+  cors({
+    origin: (origin) => {
+      return allowedOrigins.includes(origin) || !origin ? origin : null;
+    },
+    credentials: true,
+  })
+);
 app.route("/auth", authRoute);
 app.route("/products", productRoute);
-app.route("carts", cartRoute);
+app.route("/carts", cartRoute);
 
 export default app;
