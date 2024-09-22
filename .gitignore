@@ -141,7 +141,6 @@ dist
 .pnp.*
 
 # Prisma
-/prisma/migrations
 /prisma/dev.db
 
 # Bun

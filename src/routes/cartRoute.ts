@@ -5,7 +5,7 @@ import * as cartSchema from "@/schemas/cartSchema";
 import authMiddleware from "@/middlewares/authMiddleware";
 
 const cartRoute = new OpenAPIHono();
-const API_TAGS = ["Carts"];
+const API_TAGS = ["Cart"];
 
 // Register security scheme
 cartRoute.openAPIRegistry.registerComponent(
@@ -59,7 +59,7 @@ cartRoute.openapi(
 cartRoute.openapi(
   {
     method: "post",
-    path: "/items",
+    path: "/item",
     summary: "Add Item to Cart",
     middleware: authMiddleware(),
     security: [{ AuthorizationBearer: [] }],
@@ -108,7 +108,7 @@ cartRoute.openapi(
 cartRoute.openapi(
   {
     method: "patch",
-    path: "/items/{itemId}",
+    path: "/item/{itemId}",
     summary: "Update Item in Cart",
     middleware: authMiddleware(),
     security: [{ AuthorizationBearer: [] }],
@@ -164,7 +164,7 @@ cartRoute.openapi(
 cartRoute.openapi(
   {
     method: "delete",
-    path: "/items/{itemId}",
+    path: "/item/{itemId}",
     summary: "Remove Item from Cart",
     middleware: authMiddleware(),
     security: [{ AuthorizationBearer: [] }],

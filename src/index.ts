@@ -44,6 +44,6 @@ app.use(
 );
 app.route("/auth", authRoute);
 app.route("/products", productRoute);
-app.route("/carts", cartRoute);
+app.route("/cart", cartRoute);
 
 export default app;

@@ -9,7 +9,7 @@ import * as cartSchema from "@/schemas/cartSchema";
  * @returns {Promise<{ cart: Cart | null; total: number }>}
  */
 export const getCart = async (userId: string) => {
-  const cart = await db.cart.findFirst({
+  let cart = await db.cart.findFirst({
     where: { userId },
     include: {
       items: {
@@ -20,7 +20,19 @@ export const getCart = async (userId: string) => {
   });
 
   if (!cart) {
-    throw new Error("Cart not found for the user.");
+    cart = await db.cart.create({
+      data: {
+        userId,
+        items: {
+          create: [],
+        },
+      },
+      include: {
+        items: {
+          include: { product: true },
+        },
+      },
+    });
   }
 
   const total = cart.items.reduce((acc, item) => {
