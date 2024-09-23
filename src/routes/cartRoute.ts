@@ -25,7 +25,7 @@ cartRoute.openapi(
     method: "get",
     path: "/",
     summary: "Get Cart",
-    middleware: authMiddleware(),
+    middleware: authMiddleware,
     security: [{ AuthorizationBearer: [] }],
     responses: {
       200: {
@@ -61,7 +61,7 @@ cartRoute.openapi(
     method: "post",
     path: "/item",
     summary: "Add Item to Cart",
-    middleware: authMiddleware(),
+    middleware: authMiddleware,
     security: [{ AuthorizationBearer: [] }],
     request: {
       body: {
@@ -110,7 +110,7 @@ cartRoute.openapi(
     method: "patch",
     path: "/item/{itemId}",
     summary: "Update Item in Cart",
-    middleware: authMiddleware(),
+    middleware: authMiddleware,
     security: [{ AuthorizationBearer: [] }],
     request: {
       params: cartSchema.itemIdSchema,
@@ -166,7 +166,7 @@ cartRoute.openapi(
     method: "delete",
     path: "/item/{itemId}",
     summary: "Remove Item from Cart",
-    middleware: authMiddleware(),
+    middleware: authMiddleware,
     security: [{ AuthorizationBearer: [] }],
     request: {
       params: cartSchema.itemIdSchema,
@@ -212,7 +212,7 @@ cartRoute.openapi(
     method: "post",
     path: "/checkout",
     summary: "Checkout Cart",
-    middleware: authMiddleware(),
+    middleware: authMiddleware,
     security: [{ AuthorizationBearer: [] }],
     responses: {
       200: {

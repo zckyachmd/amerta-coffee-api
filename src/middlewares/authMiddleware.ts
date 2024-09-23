@@ -16,36 +16,34 @@ import db from "@/libs/db";
  * If the token is invalid for any other reason, a 401 response is returned with
  * a generic error message.
  */
-const authMiddleware = () => {
-  return createMiddleware(async (c, next) => {
-    const authHeader = c.req.header("Authorization");
-    const token = authHeader?.split(" ")[1] || null;
-    if (!token) {
-      return c.json({ message: "Authorization token is required!" }, 401);
+const authMiddleware = createMiddleware(async (c, next) => {
+  const authHeader = c.req.header("Authorization");
+  const token = authHeader?.split(" ")[1] || null;
+  if (!token) {
+    return c.json({ message: "Authorization token is required!" }, 401);
+  }
+
+  try {
+    const decodedToken = await validateToken(token);
+    if (!decodedToken || !decodedToken.subject) {
+      throw new Error("Invalid or expired access token!");
     }
 
-    try {
-      const decodedToken = await validateToken(token);
-      if (!decodedToken || !decodedToken.subject) {
-        throw new Error("Invalid or expired access token!");
-      }
-
-      const userId = decodedToken?.subject;
-      const user = await db.user.findUnique({
-        where: { id: userId },
-        select: { id: true },
-      });
-      if (!user) {
-        return c.json({ message: "User not found!" }, 404);
-      }
-
-      c.set("user", user);
-
-      await next();
-    } catch (error: Error | any) {
-      return c.json({ message: error.message || "Unauthorized!" }, 401);
+    const userId = decodedToken?.subject;
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    if (!user) {
+      return c.json({ message: "User not found!" }, 404);
     }
-  });
-};
+
+    c.set("user", user);
+
+    await next();
+  } catch (error: Error | any) {
+    return c.json({ message: error.message || "Unauthorized!" }, 401);
+  }
+});
 
 export default authMiddleware;

@@ -64,7 +64,7 @@ export const validateToken = async (token: string) => {
  */
 export const createRefreshToken = async (
   userId: string,
-  expiresInDays: number = 30
+  expiresInDays: number = 60
 ) => {
   try {
     const secret = await getEncodedSecret();

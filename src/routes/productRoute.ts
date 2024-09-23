@@ -114,7 +114,7 @@ productRoute.openapi(
     method: "post",
     path: "/",
     summary: "Create Product",
-    middleware: authMiddleware(),
+    middleware: authMiddleware,
     security: [{ AuthorizationBearer: [] }],
     request: {
       body: {
@@ -163,7 +163,7 @@ productRoute.openapi(
     method: "patch",
     path: "/{productId}",
     summary: "Update Product By Product ID",
-    middleware: authMiddleware(),
+    middleware: authMiddleware,
     security: [{ AuthorizationBearer: [] }],
     request: {
       params: productSchema.productIdSchema,
@@ -214,7 +214,7 @@ productRoute.openapi(
     method: "delete",
     path: "/{productId}",
     summary: "Delete Product By Product ID",
-    middleware: authMiddleware(),
+    middleware: authMiddleware,
     security: [{ AuthorizationBearer: [] }],
     request: {
       params: productSchema.productIdSchema,

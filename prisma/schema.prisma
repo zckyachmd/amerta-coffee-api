@@ -88,7 +88,7 @@ model CartItem {
   updatedAt DateTime @updatedAt
 
   product Product @relation(fields: [productId], references: [id])
-  cart    Cart    @relation("CartItems", fields: [cartId], references: [id])
+  cart    Cart    @relation("CartItems", fields: [cartId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, productId])
   @@map("cart_items")
