@@ -15,15 +15,15 @@
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.4.1",
-    "@hono/zod-openapi": "^0.16.0",
-    "@prisma/client": "^5.19.1",
-    "hono": "^4.6.2",
+    "@hono/zod-openapi": "^0.16.3",
+    "@prisma/client": "^5.20.0",
+    "hono": "^4.6.3",
     "oslo": "^1.2.1"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.0.1",
+    "@faker-js/faker": "^9.0.3",
     "@types/bun": "latest",
-    "prisma": "^5.19.1"
+    "prisma": "^5.20.0"
   },
   "author": "Zacky Achmad",
   "license": "MIT"

@@ -26,28 +26,30 @@ export const getAll = async (
   const take = limit > 0 ? limit : 10;
 
   try {
-    const [products, total] = await Promise.all([
-      db.product.findMany({
-        where: whereConditions,
-        skip,
-        take,
-        orderBy,
-      }),
-      db.product.count({
-        where: whereConditions,
-      }),
-    ]);
+    return await db.$transaction(async (tx) => {
+      const [products, total] = await Promise.all([
+        tx.product.findMany({
+          where: whereConditions,
+          skip,
+          take,
+          orderBy,
+        }),
+        tx.product.count({
+          where: whereConditions,
+        }),
+      ]);
 
-    return {
-      products,
-      totalData: total,
-      pagination: page
-        ? {
-            currentPage: page,
-            totalPages: Math.ceil(total / take),
-          }
-        : undefined,
-    };
+      return {
+        products,
+        totalData: total,
+        pagination: page
+          ? {
+              currentPage: page,
+              totalPages: Math.ceil(total / take),
+            }
+          : undefined,
+      };
+    });
   } catch (error: Error | any) {
     throw new Error("Failed to fetch products", { cause: error });
   } finally {
@@ -67,23 +69,31 @@ export const getAll = async (
  * @returns {Promise<{exists: boolean} | Product>}
  */
 export const getById = async (id: string, count = false) => {
-  if (count) {
-    const productExists = await db.product.count({
-      where: { id },
+  try {
+    return await db.$transaction(async (tx) => {
+      if (count) {
+        const productExists = await tx.product.count({
+          where: { id },
+        });
+
+        if (!productExists) {
+          throw new Error("Product not found!");
+        }
+
+        return { exists: true };
+      }
+
+      const product = await tx.product.findUniqueOrThrow({
+        where: { id },
+      });
+
+      return product;
     });
-
-    if (!productExists) {
-      throw new Error("Product not found!");
-    }
-
-    return { exists: true };
+  } catch (error: Error | any) {
+    throw new Error("Failed to retrieve product", { cause: error });
+  } finally {
+    await db.$disconnect();
   }
-
-  const product = await db.product.findUniqueOrThrow({
-    where: { id },
-  });
-
-  return product;
 };
 
 /**
@@ -93,15 +103,23 @@ export const getById = async (id: string, count = false) => {
  * @returns {Promise<Product>}
  */
 export const getBySlug = async (slug: string) => {
-  const product = await db.product.findUnique({
-    where: { slug },
-  });
+  try {
+    return await db.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({
+        where: { slug },
+      });
 
-  if (!product) {
-    throw new Error("Product not found!");
+      if (!product) {
+        throw new Error("Product not found!");
+      }
+
+      return product;
+    });
+  } catch (error: Error | any) {
+    throw new Error("Failed to retrieve product by slug", { cause: error });
+  } finally {
+    await db.$disconnect();
   }
-
-  return product;
 };
 
 /**
@@ -120,28 +138,33 @@ export const create = async (data: z.infer<typeof productSchema>) => {
     images = ["https://placehold.co/500x500?text=No%20Image"],
   } = data;
 
-  const transaction = await db.$transaction(async (tx) => {
-    const isExist = await tx.product.findUnique({
-      where: { name },
-    });
-    if (isExist) {
-      throw new Error("Product already exists!");
-    }
+  try {
+    return await db.$transaction(async (tx) => {
+      const isExist = await tx.product.findUnique({
+        where: { name },
+      });
 
-    return await tx.product.create({
-      data: {
-        name,
-        description,
-        price,
-        stock_qty: stock,
-        slug: slugify(name),
-        sku,
-        image_url: Array.isArray(images) ? images : [images],
-      },
-    });
-  });
+      if (isExist) {
+        throw new Error("Product already exists!");
+      }
 
-  return transaction;
+      return await tx.product.create({
+        data: {
+          name,
+          description,
+          price,
+          stock_qty: stock,
+          slug: slugify(name),
+          sku,
+          image_url: Array.isArray(images) ? images : [images],
+        },
+      });
+    });
+  } catch (error: Error | any) {
+    throw new Error("Failed to create product", { cause: error });
+  } finally {
+    await db.$disconnect();
+  }
 };
 
 /**
@@ -163,27 +186,34 @@ export const update = async (
     images = ["https://placehold.co/500x500?text=No%20Image"],
   } = data;
 
-  return await db.$transaction(async (tx) => {
-    const isExist = await tx.product.findUnique({
-      where: { id },
-    });
-    if (!isExist) {
-      throw new Error("Product not found!");
-    }
+  try {
+    return await db.$transaction(async (tx) => {
+      const isExist = await tx.product.findUnique({
+        where: { id },
+      });
 
-    return await tx.product.update({
-      where: { id },
-      data: {
-        name,
-        description,
-        price,
-        stock_qty: stock,
-        slug: slugify(name),
-        sku,
-        image_url: Array.isArray(images) ? images : [images],
-      },
+      if (!isExist) {
+        throw new Error("Product not found!");
+      }
+
+      return await tx.product.update({
+        where: { id },
+        data: {
+          name,
+          description,
+          price,
+          stock_qty: stock,
+          slug: slugify(name),
+          sku,
+          image_url: Array.isArray(images) ? images : [images],
+        },
+      });
     });
-  });
+  } catch (error: Error | any) {
+    throw new Error("Failed to update product", { cause: error });
+  } finally {
+    await db.$disconnect();
+  }
 };
 
 /**
@@ -193,14 +223,21 @@ export const update = async (
  * @returns {Promise<void>}
  */
 export const deleteById = async (id: string) => {
-  return await db.$transaction(async (tx) => {
-    const isExist = await tx.product.findUnique({
-      where: { id },
-    });
-    if (!isExist) {
-      throw new Error("Product not found!");
-    }
+  try {
+    return await db.$transaction(async (tx) => {
+      const isExist = await tx.product.findUnique({
+        where: { id },
+      });
 
-    return await tx.product.delete({ where: { id } });
-  });
+      if (!isExist) {
+        throw new Error("Product not found!");
+      }
+
+      return await tx.product.delete({ where: { id } });
+    });
+  } catch (error: Error | any) {
+    throw new Error("Failed to delete product", { cause: error });
+  } finally {
+    await db.$disconnect();
+  }
 };

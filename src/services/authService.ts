@@ -7,119 +7,122 @@ import db from "@/libs/db";
 /**
  * Registers a new user.
  *
- * @param data The user data to register.
- * @returns The registered user.
- * @throws {Error} If the email is already in use.
+ * @param data - The data for registering a new user.
+ * @returns The newly registered user.
+ * @throws {Error} If the email is already registered.
  */
 export const register = async (data: z.infer<typeof registerSchema>) => {
-  const existingUser = await db.user.findUnique({
-    where: { email: data.email },
+  return await db.$transaction(async (tx) => {
+    const existingUser = await tx.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existingUser) {
+      throw new Error("Email already registered!");
+    }
+
+    const hashedPassword = await crypto.hashValue(data.password);
+    const initials = data?.name
+      .split(" ")
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("");
+    const avatar = `https://placehold.co/300x300/FFFFFF/000000/?text=${initials}`;
+
+    const user = await tx.user.create({
+      data: {
+        name: data.name,
+        email: data.email,
+        phone: data?.phone,
+        address: data?.address,
+        avatar_url: data?.avatar_url || avatar,
+        password: hashedPassword,
+      },
+      select: {
+        name: true,
+        email: true,
+      },
+    });
+
+    return user;
   });
-
-  if (existingUser) {
-    throw new Error("Email already registered!");
-  }
-
-  const hashedPassword = await crypto.hashValue(data.password);
-  const initials = data?.name
-    .split(" ")
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
-  const avatar = `https://placehold.co/300x300/FFFFFF/000000/?text=${initials}`;
-
-  const user = await db.user.create({
-    data: {
-      name: data.name,
-      email: data.email,
-      phone: data?.phone,
-      address: data?.address,
-      avatar_url: data?.avatar_url || avatar,
-      password: hashedPassword,
-    },
-  });
-
-  return { name: user.name, email: user.email };
 };
 
 /**
- * Logs in a user and returns JWT access and refresh tokens.
+ * Logs in an existing user.
  *
- * @param data The login data (email and password).
- * @returns The generated access and refresh tokens.
- * @throws {Error} If the credentials are invalid.
+ * @param data - The data for logging in an existing user.
+ * @returns The access token and refresh token for the user.
+ * @throws {Error} If the email or password is incorrect.
  */
 export const login = async (data: z.infer<typeof loginSchema>) => {
-  const user = await db.user.findUnique({
-    where: { email: data.email },
+  return await db.$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (!user || !(await crypto.verifyValue(data.password, user.password))) {
+      throw new Error("Email or password is incorrect!");
+    }
+
+    const userId = user.id.toString();
+    const [accessToken, refreshToken] = await Promise.all([
+      jwt.createAccessToken(userId),
+      jwt.createRefreshToken(userId),
+    ]);
+
+    return { accessToken, refreshToken };
   });
-
-  if (!user || !(await crypto.verifyValue(data.password, user.password))) {
-    throw new Error("Email or password is incorrect!");
-  }
-
-  const userId = user.id.toString();
-  const [accessToken, refreshToken] = await Promise.all([
-    jwt.createAccessToken(userId),
-    jwt.createRefreshToken(userId),
-  ]);
-
-  return { accessToken, refreshToken };
 };
 
 /**
- * Gets the profile of the user from the given access token.
+ * Retrieves the user profile associated with the given access token.
  *
- * @param token The access token to validate and extract the user ID from.
- * @returns The user's profile with their name and email.
- * @throws {Error} If the token is invalid or expired.
+ * @param token - The access token.
+ * @returns The user profile.
+ * @throws {Error} If the access token is invalid or expired.
  */
 export const profile = async (token: string) => {
   const decodedToken = await jwt.validateToken(token);
-
   if (!decodedToken?.subject) {
     throw new Error("Invalid or expired access token");
   }
 
-  const user = await db.user.findUnique({
+  return await db.user.findUnique({
     where: { id: decodedToken.subject },
+    select: {
+      name: true,
+      email: true,
+      avatar_url: true,
+      phone: true,
+      address: true,
+      createdAt: true,
+    },
   });
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return {
-    name: user?.name,
-    email: user?.email,
-    avatar: user?.avatar_url,
-    phone: user?.phone,
-    address: user?.address,
-    joinedAt: user?.createdAt,
-  };
 };
 
 /**
- * Processes a refresh token by either revoking it or regenerating a new token pair.
+ * Processes a refresh token, either revoking it or regenerating a new one.
  *
- * @param refreshToken The refresh token to process.
- * @param action The action to take on the token. If "REVOKE", the token is revoked.
- * If "REGENERATE", a new token pair is generated and returned.
- * @returns If action is "REVOKE", returns a boolean indicating success. If action is
- * "REGENERATE", returns an object with the new access and refresh tokens.
- * @throws {Error} If the token is invalid or expired.
+ * @param refreshToken - The refresh token to process.
+ * @param action - The action to take, either "REVOKE" or "REGENERATE".
+ *
+ * @returns If revoking, true is returned. If regenerating, the new access and
+ *   refresh tokens are returned.
+ *
+ * @throws {Error} If the refresh token is invalid or already revoked.
  */
 const processToken = async (
   refreshToken: string,
   action: "REVOKE" | "REGENERATE"
 ) => {
-  const decodedToken = await jwt.validateToken(refreshToken);
-  if (!decodedToken?.subject) {
-    throw new Error("Invalid or expired refresh token");
-  }
+  return await db.$transaction(async (tx) => {
+    const decodedToken = await jwt.validateToken(refreshToken);
+    if (!decodedToken?.subject) {
+      throw new Error("Invalid or expired refresh token");
+    }
 
-  const userId = decodedToken.subject;
-  return await db.$transaction(async (prisma) => {
-    const tokenRecords = await prisma.userToken.findMany({
+    const userId = decodedToken.subject;
+    const tokenRecords = await tx.userToken.findMany({
       where: {
         userId,
         revoked: false,
@@ -141,13 +144,9 @@ const processToken = async (
       throw new Error("Refresh token is invalid or already revoked");
     }
 
-    await prisma.userToken.update({
+    await tx.userToken.update({
       where: { id: validTokenRecord.id },
       data: { revoked: true },
-    });
-
-    await prisma.userToken.deleteMany({
-      where: { userId, revoked: true },
     });
 
     if (action === "REGENERATE") {
@@ -155,7 +154,6 @@ const processToken = async (
         jwt.createAccessToken(userId.toString()),
         jwt.createRefreshToken(userId.toString()),
       ]);
-
       return { accessToken: newAccessToken, refreshToken: newRefreshToken };
     }
 
@@ -164,19 +162,22 @@ const processToken = async (
 };
 
 /**
- * Regenerates a new access and refresh token pair for the given refresh token.
- * @param refreshToken The refresh token to use for regenerating the tokens.
- * @returns The new access and refresh token pair as an object with `accessToken` and `refreshToken` properties.
+ * Regenerates a new access and refresh token using the given refresh token.
+ *
+ * @param refreshToken - The refresh token to use to regenerate a new token.
+ * @returns An object containing the new access and refresh tokens.
+ * @throws {Error} If the refresh token is invalid or already revoked.
  */
 export const regenToken = async (refreshToken: string): Promise<any> => {
   return await processToken(refreshToken, "REGENERATE");
 };
 
 /**
- * Logs out a user by invalidating their refresh token.
+ * Revokes a refresh token and makes it invalid for authentication.
  *
- * @param refreshToken The refresh token to revoke.
- * @returns A boolean indicating success.
+ * @param refreshToken - The refresh token to revoke.
+ * @returns A boolean indicating whether the token was revoked successfully.
+ * @throws {Error} If the refresh token is invalid or already revoked.
  */
 export const logout = async (refreshToken: string) => {
   return await processToken(refreshToken, "REVOKE");
