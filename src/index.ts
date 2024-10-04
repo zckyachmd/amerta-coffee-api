@@ -6,11 +6,41 @@ import authRoute from "@/routes/authRoute";
 import productRoute from "@/routes/productRoute";
 import cartRoute from "@/routes/cartRoute";
 
-const allowedOrigins = process.env.JWT_ALLOWS_ORIGINS?.split(",") || [];
+const allowedOrigins = process.env.CORS_ALLOWS_ORIGINS?.split(",") || [];
 const app = new OpenAPIHono();
 
+// Middleware
+app.use("*", logger());
+app.use(
+  "*",
+  cors({
+    origin: (origin) => {
+      if (!origin) {
+        console.log("Origin not found!");
+        return null;
+      }
+
+      const validOrigin = allowedOrigins.some((allowedOrigin) => {
+        return (
+          origin === `http://${allowedOrigin}` ||
+          origin === `https://${allowedOrigin}`
+        );
+      });
+
+      if (validOrigin) {
+        console.log(`Origin accepted: ${origin}`);
+        return origin;
+      }
+
+      console.log(`Origin blocked: ${origin}`);
+      return null;
+    },
+    credentials: true,
+    maxAge: 3600,
+  })
+);
+
 // Web routes
-app.use(logger());
 app.get("/", (c) => {
   return c.json(
     {
@@ -33,15 +63,6 @@ app.doc("/spec.json", {
 });
 
 // API routes
-app.use(
-  "*",
-  cors({
-    origin: (origin) => {
-      return allowedOrigins.includes(origin) || !origin ? origin : null;
-    },
-    credentials: true,
-  })
-);
 app.route("/auth", authRoute);
 app.route("/products", productRoute);
 app.route("/cart", cartRoute);

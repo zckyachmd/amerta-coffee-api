@@ -16,6 +16,7 @@ WORKDIR /app
 
 COPY --from=builder /app /app
 
+RUN bun install
 RUN bun run prisma generate
 
 EXPOSE 3000

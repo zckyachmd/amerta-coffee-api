@@ -4,8 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: "amerta-coffee-api"
+    restart: always
     ports:
-      - "3000:3000"
+      - "${WEB_PORT}:3000"
     environment:
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}?schema=public
       JWT_SECRET: ${JWT_SECRET}
@@ -14,10 +15,15 @@ services:
         condition: service_healthy
     networks:
       - amerta_coffee_network
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - .env:/app/.env
 
   db:
-    image: postgres:alpine
+    image: postgres:16-alpine
     container_name: "amerta-coffee-db"
+    restart: always
     ports:
       - "${DB_PORT}:5432"
     environment:
@@ -30,7 +36,7 @@ services:
       - amerta_coffee_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
-      interval: 5s
+      interval: 15s
       timeout: 5s
       retries: 5
 

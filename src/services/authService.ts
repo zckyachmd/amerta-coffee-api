@@ -21,6 +21,14 @@ export const register = async (data: z.infer<typeof registerSchema>) => {
       throw new Error("Email already registered!");
     }
 
+    const existingPhoneUsers = await tx.user.findMany({
+      where: { phone: data.phone },
+    });
+
+    if (existingPhoneUsers.length > 0) {
+      throw new Error("Phone number already registered with another user!");
+    }
+
     const hashedPassword = await crypto.hashValue(data.password);
     const initials = data?.name
       .split(" ")
@@ -126,7 +134,6 @@ const processToken = async (
       where: {
         userId,
         revoked: false,
-        expiresAt: { gte: new Date() },
       },
     });
 
