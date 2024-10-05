@@ -5,6 +5,7 @@ import { logger } from "hono/logger";
 import authRoute from "@/routes/authRoute";
 import productRoute from "@/routes/productRoute";
 import cartRoute from "@/routes/cartRoute";
+import orderRoute from "@/routes/orderRoute";
 
 const allowedOrigins = process.env.CORS_ALLOWS_ORIGINS?.split(",") || [];
 const app = new OpenAPIHono();
@@ -15,24 +16,19 @@ app.use(
   "*",
   cors({
     origin: (origin) => {
-      if (!origin) {
-        console.log("Origin not found!");
-        return null;
+      if (origin) {
+        const validOrigin = allowedOrigins.some((allowedOrigin) => {
+          return (
+            origin === `http://${allowedOrigin}` ||
+            origin === `https://${allowedOrigin}`
+          );
+        });
+
+        if (validOrigin) {
+          return origin;
+        }
       }
 
-      const validOrigin = allowedOrigins.some((allowedOrigin) => {
-        return (
-          origin === `http://${allowedOrigin}` ||
-          origin === `https://${allowedOrigin}`
-        );
-      });
-
-      if (validOrigin) {
-        console.log(`Origin accepted: ${origin}`);
-        return origin;
-      }
-
-      console.log(`Origin blocked: ${origin}`);
       return null;
     },
     credentials: true,
@@ -66,5 +62,6 @@ app.doc("/spec.json", {
 app.route("/auth", authRoute);
 app.route("/products", productRoute);
 app.route("/cart", cartRoute);
+app.route("/orders", orderRoute);
 
 export default app;

@@ -120,7 +120,7 @@ productRoute.openapi(
       body: {
         content: {
           "application/json": {
-            schema: productSchema,
+            schema: productSchema.productSchema,
           },
         },
       },

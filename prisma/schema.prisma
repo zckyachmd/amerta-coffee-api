@@ -96,6 +96,7 @@ model CartItem {
 
 model Order {
   id          String   @id @default(cuid())
+  noInvoice   String   @unique @db.VarChar(128)
   userId      String
   totalAmount Int      @default(0)
   createdAt   DateTime @default(now())

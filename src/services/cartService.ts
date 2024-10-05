@@ -180,6 +180,25 @@ export const removeItemFromCart = async (userId: string, itemId: string) => {
 };
 
 /**
+ * Generates a random invoice number.
+ *
+ * @param {string} [prefix="INV"] - The prefix to use for the invoice number.
+ * @returns {Promise<string>} The generated invoice number.
+ */
+export const generateInvoiceNumber = async (prefix: string = "INV") => {
+  const now = new Date();
+
+  const day = String(now.getDate()).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear()).slice(-2);
+
+  const randomNumbers = Math.floor(100000 + Math.random() * 900000);
+  const invoiceNumber = `${prefix}-${day}${month}${year}-${randomNumbers}`;
+
+  return invoiceNumber;
+};
+
+/**
  * Checkout the user's cart.
  *
  * This will mark all items in the user's cart as unavailable and then delete the cart.
@@ -216,6 +235,7 @@ export const checkoutCart = async (userId: string) => {
     const order = await db.order.create({
       data: {
         userId,
+        noInvoice: await generateInvoiceNumber(),
         totalAmount,
         items: {
           create: cart.items.map((item) => ({

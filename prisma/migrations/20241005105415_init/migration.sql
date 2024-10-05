@@ -69,6 +69,7 @@ CREATE TABLE "cart_items" (
 -- CreateTable
 CREATE TABLE "orders" (
     "id" TEXT NOT NULL,
+    "noInvoice" VARCHAR(128) NOT NULL,
     "userId" TEXT NOT NULL,
     "totalAmount" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -104,6 +105,9 @@ CREATE UNIQUE INDEX "products_slug_key" ON "products"("slug");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "cart_items_cartId_productId_key" ON "cart_items"("cartId", "productId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "orders_noInvoice_key" ON "orders"("noInvoice");
 
 -- AddForeignKey
 ALTER TABLE "user_tokens" ADD CONSTRAINT "user_tokens_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -2,6 +2,11 @@
 
 Welcome to **Amerta Coffee API**, the backend service for **Amerta Coffee**, your premium Indonesian coffee online store. This API handles all the server-side operations, including product management, user authentication, and order processing.
 
+<details>
+<summary>Entities Relational Diagram</summary>
+<img src="diagram.png" alt="Relational Diagram" style="width: 100%; align: center"/>
+</details>
+
 ## Features
 
 - **User Authentication**: Endpoints for user registration, login, and retrieving user details.

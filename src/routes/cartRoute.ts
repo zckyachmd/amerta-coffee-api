@@ -230,8 +230,8 @@ cartRoute.openapi(
   async (c: Context) => {
     const userId = c.get("user").id as string;
     try {
-      await cartService.checkoutCart(userId);
-      return c.json({ status: "success", message: "Cart checked out!" }, 200);
+      const order = await cartService.checkoutCart(userId);
+      return c.json({ status: "success", order }, 200);
     } catch (error: any) {
       return c.json(
         {

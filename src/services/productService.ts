@@ -124,6 +124,8 @@ export const create = async (data: z.infer<typeof productSchema>) => {
     stock,
     sku = null,
     images = ["https://placehold.co/500x500?text=No%20Image"],
+    specifications,
+    grinding,
   } = data;
 
   try {
@@ -144,6 +146,8 @@ export const create = async (data: z.infer<typeof productSchema>) => {
         slug: slugify(name),
         sku,
         image_url: Array.isArray(images) ? images : [images],
+        specifications,
+        grinding,
       },
     });
   } catch (error: Error | any) {
