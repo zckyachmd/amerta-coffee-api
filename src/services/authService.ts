@@ -12,47 +12,45 @@ import db from "@/libs/db";
  * @throws {Error} If the email is already registered.
  */
 export const register = async (data: z.infer<typeof registerSchema>) => {
-  return await db.$transaction(async (tx) => {
-    const existingUser = await tx.user.findUnique({
-      where: { email: data.email },
-    });
-
-    if (existingUser) {
-      throw new Error("Email already registered!");
-    }
-
-    const existingPhoneUsers = await tx.user.findMany({
-      where: { phone: data.phone },
-    });
-
-    if (existingPhoneUsers.length > 0) {
-      throw new Error("Phone number already registered with another user!");
-    }
-
-    const hashedPassword = await crypto.hashValue(data.password);
-    const initials = data?.name
-      .split(" ")
-      .map((part) => part.charAt(0).toUpperCase())
-      .join("");
-    const avatar = `https://placehold.co/300x300/FFFFFF/000000/?text=${initials}`;
-
-    const user = await tx.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        phone: data?.phone,
-        address: data?.address,
-        avatar_url: data?.avatar_url || avatar,
-        password: hashedPassword,
-      },
-      select: {
-        name: true,
-        email: true,
-      },
-    });
-
-    return user;
+  const existingUser = await db.user.findUnique({
+    where: { email: data.email },
   });
+
+  if (existingUser) {
+    throw new Error("Email already registered!");
+  }
+
+  const existingPhoneUsers = await db.user.findMany({
+    where: { phone: data.phone },
+  });
+
+  if (existingPhoneUsers.length > 0) {
+    throw new Error("Phone number already registered with another user!");
+  }
+
+  const hashedPassword = await crypto.hashValue(data.password);
+  const initials = data?.name
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+  const avatar = `https://placehold.co/300x300/FFFFFF/000000/?text=${initials}`;
+
+  const user = await db.user.create({
+    data: {
+      name: data.name,
+      email: data.email,
+      phone: data?.phone,
+      address: data?.address,
+      avatar_url: data?.avatar_url || avatar,
+      password: hashedPassword,
+    },
+    select: {
+      name: true,
+      email: true,
+    },
+  });
+
+  return user;
 };
 
 /**
@@ -63,23 +61,21 @@ export const register = async (data: z.infer<typeof registerSchema>) => {
  * @throws {Error} If the email or password is incorrect.
  */
 export const login = async (data: z.infer<typeof loginSchema>) => {
-  return await db.$transaction(async (tx) => {
-    const user = await tx.user.findUnique({
-      where: { email: data.email },
-    });
-
-    if (!user || !(await crypto.verifyValue(data.password, user.password))) {
-      throw new Error("Email or password is incorrect!");
-    }
-
-    const userId = user.id.toString();
-    const [accessToken, refreshToken] = await Promise.all([
-      jwt.createAccessToken(userId),
-      jwt.createRefreshToken(userId),
-    ]);
-
-    return { accessToken, refreshToken };
+  const user = await db.user.findUnique({
+    where: { email: data.email },
   });
+
+  if (!user || !(await crypto.verifyValue(data.password, user.password))) {
+    throw new Error("Email or password is incorrect!");
+  }
+
+  const userId = user.id.toString();
+  const [accessToken, refreshToken] = await Promise.all([
+    jwt.createAccessToken(userId),
+    jwt.createRefreshToken(userId),
+  ]);
+
+  return { accessToken, refreshToken };
 };
 
 /**
@@ -123,49 +119,47 @@ const processToken = async (
   refreshToken: string,
   action: "REVOKE" | "REGENERATE"
 ) => {
-  return await db.$transaction(async (tx) => {
-    const decodedToken = await jwt.validateToken(refreshToken);
-    if (!decodedToken?.subject) {
-      throw new Error("Invalid or expired refresh token");
-    }
+  const decodedToken = await jwt.validateToken(refreshToken);
+  if (!decodedToken?.subject) {
+    throw new Error("Invalid or expired refresh token");
+  }
 
-    const userId = decodedToken.subject;
-    const tokenRecords = await tx.userToken.findMany({
-      where: {
-        userId,
-        revoked: false,
-      },
-    });
-
-    const validTokenRecord = await Promise.all(
-      tokenRecords.map(async (tokenRecord) => {
-        const isValidToken = await crypto.verifyValue(
-          refreshToken,
-          tokenRecord.token
-        );
-        return isValidToken ? tokenRecord : null;
-      })
-    ).then((results) => results.find((record) => record !== null));
-
-    if (!validTokenRecord) {
-      throw new Error("Refresh token is invalid or already revoked");
-    }
-
-    await tx.userToken.update({
-      where: { id: validTokenRecord.id },
-      data: { revoked: true },
-    });
-
-    if (action === "REGENERATE") {
-      const [newAccessToken, newRefreshToken] = await Promise.all([
-        jwt.createAccessToken(userId.toString()),
-        jwt.createRefreshToken(userId.toString()),
-      ]);
-      return { accessToken: newAccessToken, refreshToken: newRefreshToken };
-    }
-
-    return true;
+  const userId = decodedToken.subject;
+  const tokenRecords = await db.userToken.findMany({
+    where: {
+      userId,
+      revoked: false,
+    },
   });
+
+  const validTokenRecord = await Promise.all(
+    tokenRecords.map(async (tokenRecord) => {
+      const isValidToken = await crypto.verifyValue(
+        refreshToken,
+        tokenRecord.token
+      );
+      return isValidToken ? tokenRecord : null;
+    })
+  ).then((results) => results.find((record) => record !== null));
+
+  if (!validTokenRecord) {
+    throw new Error("Refresh token is invalid or already revoked");
+  }
+
+  await db.userToken.update({
+    where: { id: validTokenRecord.id },
+    data: { revoked: true },
+  });
+
+  if (action === "REGENERATE") {
+    const [newAccessToken, newRefreshToken] = await Promise.all([
+      jwt.createAccessToken(userId.toString()),
+      jwt.createRefreshToken(userId.toString()),
+    ]);
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  }
+
+  return true;
 };
 
 /**

@@ -26,34 +26,30 @@ export const getAll = async (
   const take = limit > 0 ? limit : 10;
 
   try {
-    return await db.$transaction(async (tx) => {
-      const [products, total] = await Promise.all([
-        tx.product.findMany({
-          where: whereConditions,
-          skip,
-          take,
-          orderBy,
-        }),
-        tx.product.count({
-          where: whereConditions,
-        }),
-      ]);
+    const [products, total] = await Promise.all([
+      db.product.findMany({
+        where: whereConditions,
+        skip,
+        take,
+        orderBy,
+      }),
+      db.product.count({
+        where: whereConditions,
+      }),
+    ]);
 
-      return {
-        products,
-        totalData: total,
-        pagination: page
-          ? {
-              currentPage: page,
-              totalPages: Math.ceil(total / take),
-            }
-          : undefined,
-      };
-    });
+    return {
+      products,
+      totalData: total,
+      pagination: page
+        ? {
+            currentPage: page,
+            totalPages: Math.ceil(total / take),
+          }
+        : undefined,
+    };
   } catch (error: Error | any) {
     throw new Error("Failed to fetch products", { cause: error });
-  } finally {
-    await db.$disconnect();
   }
 };
 
@@ -70,29 +66,25 @@ export const getAll = async (
  */
 export const getById = async (id: string, count = false) => {
   try {
-    return await db.$transaction(async (tx) => {
-      if (count) {
-        const productExists = await tx.product.count({
-          where: { id },
-        });
-
-        if (!productExists) {
-          throw new Error("Product not found!");
-        }
-
-        return { exists: true };
-      }
-
-      const product = await tx.product.findUniqueOrThrow({
+    if (count) {
+      const productExists = await db.product.count({
         where: { id },
       });
 
-      return product;
+      if (!productExists) {
+        throw new Error("Product not found!");
+      }
+
+      return { exists: true };
+    }
+
+    const product = await db.product.findUniqueOrThrow({
+      where: { id },
     });
+
+    return product;
   } catch (error: Error | any) {
     throw new Error("Failed to retrieve product", { cause: error });
-  } finally {
-    await db.$disconnect();
   }
 };
 
@@ -104,21 +96,17 @@ export const getById = async (id: string, count = false) => {
  */
 export const getBySlug = async (slug: string) => {
   try {
-    return await db.$transaction(async (tx) => {
-      const product = await tx.product.findUnique({
-        where: { slug },
-      });
-
-      if (!product) {
-        throw new Error("Product not found!");
-      }
-
-      return product;
+    const product = await db.product.findUnique({
+      where: { slug },
     });
+
+    if (!product) {
+      throw new Error("Product not found!");
+    }
+
+    return product;
   } catch (error: Error | any) {
     throw new Error("Failed to retrieve product by slug", { cause: error });
-  } finally {
-    await db.$disconnect();
   }
 };
 
@@ -139,31 +127,27 @@ export const create = async (data: z.infer<typeof productSchema>) => {
   } = data;
 
   try {
-    return await db.$transaction(async (tx) => {
-      const isExist = await tx.product.findUnique({
-        where: { name },
-      });
+    const isExist = await db.product.findUnique({
+      where: { name },
+    });
 
-      if (isExist) {
-        throw new Error("Product already exists!");
-      }
+    if (isExist) {
+      throw new Error("Product already exists!");
+    }
 
-      return await tx.product.create({
-        data: {
-          name,
-          description,
-          price,
-          stock_qty: stock,
-          slug: slugify(name),
-          sku,
-          image_url: Array.isArray(images) ? images : [images],
-        },
-      });
+    return await db.product.create({
+      data: {
+        name,
+        description,
+        price,
+        stock_qty: stock,
+        slug: slugify(name),
+        sku,
+        image_url: Array.isArray(images) ? images : [images],
+      },
     });
   } catch (error: Error | any) {
     throw new Error("Failed to create product", { cause: error });
-  } finally {
-    await db.$disconnect();
   }
 };
 
@@ -187,32 +171,28 @@ export const update = async (
   } = data;
 
   try {
-    return await db.$transaction(async (tx) => {
-      const isExist = await tx.product.findUnique({
-        where: { id },
-      });
+    const isExist = await db.product.findUnique({
+      where: { id },
+    });
 
-      if (!isExist) {
-        throw new Error("Product not found!");
-      }
+    if (!isExist) {
+      throw new Error("Product not found!");
+    }
 
-      return await tx.product.update({
-        where: { id },
-        data: {
-          name,
-          description,
-          price,
-          stock_qty: stock,
-          slug: slugify(name),
-          sku,
-          image_url: Array.isArray(images) ? images : [images],
-        },
-      });
+    return await db.product.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        price,
+        stock_qty: stock,
+        slug: slugify(name),
+        sku,
+        image_url: Array.isArray(images) ? images : [images],
+      },
     });
   } catch (error: Error | any) {
     throw new Error("Failed to update product", { cause: error });
-  } finally {
-    await db.$disconnect();
   }
 };
 
@@ -224,20 +204,16 @@ export const update = async (
  */
 export const deleteById = async (id: string) => {
   try {
-    return await db.$transaction(async (tx) => {
-      const isExist = await tx.product.findUnique({
-        where: { id },
-      });
-
-      if (!isExist) {
-        throw new Error("Product not found!");
-      }
-
-      return await tx.product.delete({ where: { id } });
+    const isExist = await db.product.findUnique({
+      where: { id },
     });
+
+    if (!isExist) {
+      throw new Error("Product not found!");
+    }
+
+    await db.product.delete({ where: { id } });
   } catch (error: Error | any) {
     throw new Error("Failed to delete product", { cause: error });
-  } finally {
-    await db.$disconnect();
   }
 };
