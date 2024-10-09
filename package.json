@@ -14,9 +14,9 @@
     "seed": "bun run prisma/seed.ts"
   },
   "dependencies": {
-    "@hono/swagger-ui": "^0.4.1",
     "@hono/zod-openapi": "^0.16.3",
     "@prisma/client": "^5.20.0",
+    "@scalar/hono-api-reference": "^0.5.152",
     "hono": "^4.6.3",
     "oslo": "^1.2.1"
   },

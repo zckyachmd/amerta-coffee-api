@@ -2,7 +2,6 @@ import type { Context } from "hono";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import * as authService from "@/services/authService";
 import * as authSchema from "@/schemas/authSchema";
-import { validateToken } from "@/libs/jwt";
 
 const authRoute = new OpenAPIHono();
 const API_TAGS = ["Auth"];
@@ -102,6 +101,7 @@ authRoute.openapi(
     method: "get",
     path: "/me",
     summary: "Get user profile",
+    description: "Get user profile by JWT token.",
     security: [{ AuthorizationBearer: [] }],
     responses: {
       200: {
